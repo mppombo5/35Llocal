@@ -1,0 +1,48 @@
+Verifying signature: the only problem is a warning that says the key is not
+certified and that there's no indication that the signature belongs to
+the owner.
+
+Installing coreutils 8.29 with make:
+Set the prefix by using ./configure --prefix=$(echo ~/coreutilsInstall)
+make; make install
+
+Use wget
+"https://debbugs.gnu.org/cgi/bugreport.cgi?att=1;
+filename=0001-ls-A-now-overrides-a.patch;bug=30963;msg=10" to get the file,
+renamed it to "patch_file" for ease of use.
+
+Bug has been reproduced by changing directory into coreutilsInstall and typing
+./ls -a -A
+
+-pnum option in patch removes slashes from filenames found in the patch file,
+so we can search for the filename between different systems.
+Therefore, I find the filenames in the patch file and see how many slashes I
+should remove.
+
+Every file in lsAa.patch seems to be of the form a/{dir}, so I should remove
+one slash.
+So, I execute
+patch -p1 < patch_file
+
+src/ls.c, tests/local.mk, and test/ls/a-option.sh were successfully patched,
+but NEWS failed to be patched.
+
+After running "autoreconf -fi" within the coreutils-8.29 directory (thanks
+Kedar), I ran "make" and ran the newly compiled ls on the src directory.
+
+Commands run:
+
+CONFIG_SHELL=/bin/sh /bin/sh ./configure --prefix=/u/cs/ugrad/pombo/CI2
+--no-create --no-recursion
+    presumably this is to configure the prefix so it knows to install
+coreutils to ~/coreutilsInstall.
+
+/bin/sh ./config.status
+    it seems like the most important function this command performs is
+to create the Makefile. It also creates a few other config files for the
+make project.
+
+make all-recursive
+    this is the command that actually compiles the binaries to be updated.
+
+Sure enough, when I run ls -aA, the files . and .. are omitted as expected.

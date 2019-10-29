@@ -1,0 +1,141 @@
+#!/bin/bash
+
+dir="no directory assigned, I dun goofed"
+recursive=false
+
+if [[ $# -eq 0 ]]; then
+    dir=$(pwd)
+
+elif [[ $# -eq 1 ]]; then
+    #check if argument is -r, otherwise exit
+    if echo "$1" | grep -Eq "^-"; then
+        if [[ $1 == "-r" ]]; then
+            recursive=true
+            dir=$(pwd)
+        else
+            echo "$0: invalid syntax, directory name cannot start with '-'"
+            exit 1
+        fi
+
+    # arg can't be a non-directory or symlink
+    elif ! [[ -d $1 ]]; then
+        echo "$0: $1 is not a directory." >&2
+        exit 1
+    elif [[ -L $1 ]]; then
+        echo "$0: $1 is a symbolic link, and therefore invalid." >&2
+        exit 1
+    
+    # otherwise $1 is valid, diagnose if it can't be read
+    else
+        dir=$1
+        if ! [[ -r $1 ]]; then
+            echo "$0: $dir is not marked as readable." >&2
+        fi
+    fi
+
+# can only have 2 arguments if $1 is -r and $2 is a directory
+elif [[ $# -ge 2 ]]; then
+    if [[ $1 == "-r" ]]; then
+        if [[ -d $2 ]]; then
+            recursive=true
+            dir=$2
+        else
+            echo "$0: $2 is not a directory." >&2
+            exit 1
+        fi
+    else
+        echo "$0: $1 is not a valid argument." >&2
+        exit 1
+    fi
+
+# can't have 3+ arguments
+elif [[ $# -ge 3 ]]; then
+    echo "$0: too many arguments." >&2
+    exit 1
+fi
+
+# automatically remove dir's trailing /, if it has one
+dir=$(echo $dir | sed -r "s@/\$@@g")
+
+files=$(ls -a $dir | sort -f)
+
+# previous file to compare for case-insensitive duplicates
+# initialize to first file
+
+# sort so that different spellings of the same word will be together
+prevFile=$(ls -a $dir | sort -f | head -n 1)
+firstPass=true
+
+lastPrinted=""
+
+for file in $files
+do
+    # turns out it'd be nice to know if it's a directory
+    isDir=false
+    if [[ $file != "." ]] && [[ $file != ".." ]] && \
+            ! [[ -L "${dir}/${file}" ]] && [[ -d "${dir}/${file}" ]]; then
+        isDir=true
+    fi
+
+    if $recursive && $isDir; then
+        bash $0 -r "${dir}/${file}"
+    fi
+
+    # lowercase filename to check for matches
+    lowerfile=$(echo $file | tr '[:upper:]' '[:lower:]')
+
+    # these will always show up, check every other one
+    if [[ "$file" == "." ]] || [[ "$file" == ".." ]]; then
+        continue
+
+    # valid filename to check errors for
+    else
+        chars=$(echo $file | wc -m)
+        if echo $file | grep -Eq "^\..+" || \
+                # for some reason, an empty string shows as having one char
+                [[ $chars -gt 15 ]] || \
+                echo $file | grep -Eq "[^-_[:alnum:]\.]+"; then
+            dirSuffix=""
+            if $isDir; then
+                 dirSuffix="/"
+            fi
+            echo "${dir}/${file}${dirSuffix}"
+            prevFile=$file
+            lastPrinted=$file
+            continue
+        fi
+    fi
+
+    # check for duplicates, if it's after the first pass
+    if $firstPass; then
+        firstPass=false
+        continue
+
+    # check if the current file, in lower case, is the same as
+    # the previous file
+    else
+        lowerprevFile=$(echo $prevFile | tr '[:upper:]' '[:lower:]')
+        lowerLastPrinted=$(echo $lastPrinted | tr '[:upper:]' '[:lower:]')
+        if [[ $lowerfile == $lowerprevFile ]]; then
+            if ! [[ $lowerLastPrinted == $lowerfile ]]; then
+                dirSuffix=""
+                if [[ -d $prevFile ]]; then
+                    dirSuffix="/"
+                fi
+                echo "${dir}/${prevFile}${dirSuffix}"
+            fi
+            dirSuffix=""
+            if $isDir; then
+                dirSuffix="/"
+            fi
+            echo "${dir}/${file}${dirSuffix}"
+            prevFile=$file
+            lastPrinted=$file
+            continue
+        fi
+    fi
+
+    prevFile=$file
+done
+
+exit 0

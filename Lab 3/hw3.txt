@@ -1,0 +1,27 @@
+Q1. I would say that the performance of ls is improved with the patch,
+but *very* marginally so because the patch only removes an if statement
+from ls.c. I hardly imagine this shaves off more than a microsecond,
+but the performance is improved nonetheless.
+
+Q2. If you adopt this application, you would have to be careful about
+publishing any shells that use shell with the assumption that it has
+been patched, because not everyone will have gone through the process
+of patching it and commands such as ls -aA will behave unexpectedly.
+
+Q3. When randline.py is invoked on something like /dev/null, an error
+is thrown. From the error message, one of the lines has a comment
+saying that an IndexError is raised if the file is empty, so the
+problem is in the return statement "return seq[int(self.random()
+* len(seq))].
+
+Q4. When the script is run with python3, a syntax error is raised.
+This is because python3 saw the removal of passing tuples in as
+parameters. Where python2 would automatically parse tuples as parameters
+into functions, python3 does not support this option as it was deemed
+to be more trouble than it was worth.
+
+Q5. Under the circumstances of my testing, I could not find any
+differences in my script between using python2 and python3. This comes
+as a slight surprise, considering the phrasing of the question, but
+no modules were used in my program that were deprecated or discontinued
+after the advent of python3.

@@ -1,0 +1,109 @@
+1.  man -k [search string]
+
+    commands used:
+    man man
+
+
+2.  mv: /usr/local/cs/bin/mv
+    sh: /usr/bin/sh
+
+    commands used:
+    which mv
+    which sh
+
+
+3.  139
+
+    commands used:
+    man wc
+    man find
+    find /usr -executable -name "?r" | wc -l (use wc to count the lines of output from the find command)
+
+
+4.  /etc/alternatives/emacs
+
+    commands used:
+    ls -l /usr/bin | grep "emacs" (read the file following "->" at the end)
+
+
+5.  /usr/bin/gcc: 4.8.5
+    plain gcc: 9.2.0
+    They are likely different programs because the OS depends on legacy versions of gcc to do certain tasks, so the CS department has given us a more recent version to do our work with.
+
+    commands used:
+    /usr/bin/gcc --version
+    gcc --version
+
+
+6.  u+sx means the user will have added permission to execute the file as though it were being run by root; o-w means users not in the group will no longer have permission to write to the file.
+
+
+7.  commands used:
+    man find
+    find /usr/local/cs -ctime -28 (-ctime -28 to find files that were last modified less than 28 days ago, or 4 weeks)
+
+
+8.  253
+
+    commands used:
+    which find
+    cd /usr/bin
+    ls -al | grep -E "^l" | wc -l (used regular expression to find lines that start with l, then pipe that output to wc -l to get the number of symlinks)
+
+
+9.  librom1394.so.0.3.0
+
+    commands used:
+    ls -lt /usr/lib64 (-lt to sort in terms of time from newest to oldest, then just pick the entry at the bottom)
+
+
+10. locale gets its data from environment variables that are set at startup.
+
+    commands used:
+    man locale
+    also got info from the TA's slides.
+
+
+11. downcase-dwim
+    downcase-region
+    downcase-word
+
+    commands used:
+    C-h a downcase (search for commands containing "downcase")
+
+
+12. C-M-r: begin reverse incremental regex search
+    C-M-s: begin incremental regex search
+    C-M-t: switches positions of previous balanced expression and the next
+    C-M-u: move up in parenthesis structure
+    C-M-v: scroll to the next window
+    
+    commands used:
+    C-h c C-M-r (get command name of key combo)
+    C-h F isearch-backward-regexp (command documentation)
+    C-h c C-M-t
+    C-h F transpose-sexps
+    C-h c C-M-u
+    C-h F backward-up-list
+    C-h c C-M-v
+    C-h F scroll-other-window
+
+
+13. C-g cancels a command in progress before it's finished, whether you typed in a wrong numerical argument or want to stop what's currently running. If you're in the middle of an incremental search, it may take two instances of C-g to stop it.
+
+    commands used:
+    C-h c C-g
+    C-h F 
+
+
+14. yank inserts the most recent kill (deleted text) wherever the cursor is, and then place the cursor at the end of the inserted text. The shortcut is C-y.
+
+    commands used:
+    C-h F yank
+
+
+15. ls -l has different (and better) coloring and highlighting for the different kinds of files; dired only seems to highlight symlinks. Another, smaller difference is that in dired, if a listing takes up multiple lines it has a backslash to denote it.
+
+    commands used:
+    ls -l /usr/bin
+    C-x d /usr/bin

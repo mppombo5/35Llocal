@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/mpombo/Desktop/Fall Quarter Classes/CS 35L/Lab 4/sfrob/sfrob.c
+stdio.h
+-
+stdlib.h
+-
+assert.h
+-
+

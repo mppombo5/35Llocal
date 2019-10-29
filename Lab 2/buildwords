@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# Making two files to store temporary output. Need two because 
+# piping and redirecting the same file on the 
+# same line causes unexpected behavior.
+proper=$(mktemp)
+dummy=$(mktemp)
+
+# only extract lines that start and end with <td> tags
+grep -E " *<td[^>]*>.+</td>\ *" > $proper
+
+# remove all html tags, question marks, and leading/trailing spaces
+sed -r -i 's#\?|<[^>]*>|^ *##g' $proper
+
+# replace uppercase letters and backticks with lowercase and apostrophes
+cat $proper | tr "[:upper:]\`" "[:lower:]'" > $dummy
+
+# replace all spaces with newlines
+cat $dummy | tr -s " " "\n" > $proper
+
+# remove all commas and semicolons
+cat $proper | tr -d ",;" > $dummy
+
+# delete any lines containing characters other than the Hawaiian alphabet
+sed -r -i "/[^PpKkMmNnWwLlHhAaEeIiOoUu']/d" $dummy
+
+# sort the now (presumably) hawaiian words in dummy
+cat $dummy | sort -u > $proper
+
+cat $proper
+
+rm $proper
+rm $dummy

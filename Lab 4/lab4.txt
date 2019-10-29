@@ -1,0 +1,7 @@
+Problems building as-is:
+./configure --prefix=[dir] worked fine, but when I tried to run the make
+command I got an error telling me that there were conflicting data types for
+the function "futimens".
+
+Reproducing the bug:
+When I copied and ran the script on my machine, sure enough the wwi-armistice file said it was made in 2054.

@@ -1,0 +1,110 @@
+tr Outputs: for each of these, I displayed the contents of the html
+file, piped that into the tr command, and redirected the command
+output to a new file and then compared it side-by-side with the
+original html.
+
+tr -c 'A-Za-z' '[\n*]': every single character that is not a
+letter has been converted into a newline.
+
+tr -cs 'A-Za-z' '[\n*]': every character that is not a letter
+has been converted into a newline, and repeating instances of
+newlines have been squeezed together so that only one newline
+follows every word.
+
+tr -cs 'A-Za-z' '[\n*]' | sort: same as the previous one, but
+now the words are all sorted in order according to the C locale.
+
+tr -cs 'A-Za-z' '[\n*]' | sort -u: same as the previous one, but
+all repeating instances of words have been shortened to only one
+of each (resulting in a much smaller file).
+
+tr -cs 'A-Za-z' '[\n*]' | sort -u | comm - words: this command puts
+non-shared words between "words" and the output of the previous
+command in two separate columns, and puts shared words in a third column.
+
+tr -cs 'A-Za-z' '[\n*]' | sort -u | comm -23 - words: this command
+only outputs the words in the html file that are not also in "words" –
+it essentially uses "words" as a dictionary against which to compare.
+
+--------------------
+
+Get copy of Hawaiian words webpage:
+wget https://www.mauimapp.com/moolelo/hwnwdshw.htm
+
+buildwords script:
+
+
+#!/bin/bash
+
+# Making two files to store temporary output. Need two because 
+# piping and redirecting the same file on the 
+# same line causes unexpected behavior.
+proper=$(mktemp)
+dummy=$(mktemp)
+
+# only extract lines that start and end with <td> tags
+grep -E " *<td[^>]*>.+</td>\ *" > $proper
+
+# remove all html tags, question marks, and leading/trailing spaces
+sed -r -i 's#\?|<[^>]*>|^ *##g' $proper
+
+# replace uppercase letters and backticks with lowercase and apostrophes
+cat $proper | tr "[:upper:]\`" "[:lower:]'" > $dummy
+
+# replace all spaces with newlines
+cat $dummy | tr -s " " "\n" > $proper
+
+# remove all commas and semicolons
+cat $proper | tr -d ",;" > $dummy
+
+# delete any lines containing characters other than the Hawaiian alphabet
+sed -r -i "/[^PpKkMmNnWwLlHhAaEeIiOoUu']/d" $dummy
+
+# sort the now (presumably) hawaiian words in dummy
+cat $dummy | sort -u > $proper
+
+cat $proper
+
+rm $proper
+rm $dummy
+
+
+This script takes every word with only valid Hawaiian letters
+inside of <td> HTML tags and puts them in a sorted file, hwords,
+which I will use as my Hawaiian dictionary. The only caveat with
+this is that it also includes English words that only have valid
+Hawaiian letters, but I don't believe there's any (easy) systematic
+way to separate these.
+
+
+HAWAIIANCHECKER script:
+
+#!/bin/bash
+
+tr "[:upper:]" "[:lower:]" | tr -cs "A-Za-z'" '[\n*]' \
+    | sort -u | comm -23 - hwords
+
+
+This prints out every word in the document that is not contained in hwords.
+
+To get the number of misspelled English words, I used the command
+cat assign2.html | ./ENGLISHCHECKER | wc -l
+and got that there are 94 misspelled English words.
+
+To get the number of misspelled Hawaiian words, I used the command
+cat assign2.html | ./HAWAIIANCHECKER | wc -l
+and got that there are 554 misspelled Hawaiian words.
+
+For the final part of the lab I made two files, Hmisspell and
+Emisspell with the outputs of running HAWAIIANCHECKER and
+ENGLISHCHECKER on assign2.html, respectively.
+
+Then, I compared the two files using comm. To get the number of
+words that ENGLISHCHECKER reports as misspelled but
+HAWAIIANCHECKER does not, I ran
+comm -23 Emisspell Hmisspell | wc -l
+and got 63 words.
+
+And for the other way around, I ran
+comm -13 Emisspell Hmisspell | wc -l
+and got 523 words.
