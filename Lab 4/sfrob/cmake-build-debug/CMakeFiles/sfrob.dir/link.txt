@@ -1,1 +1,0 @@
-/usr/local/bin/gcc-9 -fsanitize=address -g -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk -Wl,-search_paths_first -Wl,-headerpad_max_install_names  CMakeFiles/sfrob.dir/sfrob.c.o  -o sfrob 

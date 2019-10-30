@@ -1,3 +1,0 @@
-/Users/mpombo/Desktop/Fall Quarter Classes/CS 35L/Lab 4/sfrob/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/mpombo/Desktop/Fall Quarter Classes/CS 35L/Lab 4/sfrob/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/mpombo/Desktop/Fall Quarter Classes/CS 35L/Lab 4/sfrob/cmake-build-debug/CMakeFiles/sfrob.dir
