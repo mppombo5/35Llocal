@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
 
 int   frobcmp(const void *a, const void *b);
 void* doubleMemSize(void* ptr, int* size);
@@ -52,8 +51,6 @@ int main() {
             c = (char) getchar();
         }
         word[wordSize] = ' ';
-        // this is safe, because I allocated two more bytes than the word's size.
-        // or I did something horribly wrong. that is also a possibility.
         word[wordSize+1] = '\0';
 
         wordList[listSize] = word;
@@ -63,7 +60,6 @@ int main() {
     }
 
     // sort the array of words according to frobcmp
-    int (*cmpFunc)(const void*, const void*) = (int (*)(const void*, const void*)) &frobcmp;
     qsort(wordList, listSize, sizeof(char*), frobcmp);
     // print out sorted array
     for (int i = 0; i < listSize; i++) {
