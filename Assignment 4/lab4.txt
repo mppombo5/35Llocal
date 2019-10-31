@@ -3,5 +3,87 @@ Problems building as-is:
 command I got an error telling me that there were conflicting data types for
 the function "futimens".
 
+
 Reproducing the bug:
-When I copied and ran the script on my machine, sure enough the wwi-armistice file said it was made in 2054.
+I wrote this script to test the difference between using the existing ls on the /tmp directory and using the buggy ls on my home directory:
+
+
+#!/bin/bash
+badls=$HOME/35L/Assign4/Lab/coreutils-with-bug/src/ls
+tmp=$(mktemp -d)
+cd $tmp
+touch -d '1918-11-11 11:00 GMT' wwi-armistice-cs35L
+touch now
+sleep 1
+touch now1
+TZ=UTC0 ls -lt --full-time wwi-armistice-cs35L now now1
+echo ""
+TZ=UTC0 $badls -lt --full-time wwi-armistice-cs35L now now1
+cd
+rm -fr $tmp
+
+
+and sure enough, the output is:
+-rw-r--r-- 1 pombo csugrad 0 2019-10-29 09:06:25.157247480 +0000 now1
+-rw-r--r-- 1 pombo csugrad 0 2019-10-29 09:06:24.150216615 +0000 now
+-rw-r--r-- 1 pombo csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+
+-rw-r--r-- 1 pombo csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+-rw-r--r-- 1 pombo csugrad 0 2019-10-29 09:06:25.157247480 +0000 now1
+-rw-r--r-- 1 pombo csugrad 0 2019-10-29 09:06:24.150216615 +0000 now
+
+as though 1918 had come before 2019.
+
+
+And now, the debugging:
+I started by making the 3 files of interest in the coreutils-with-bug/ directory and running gdb on ./ls. Then I passed "run -lt now now1 armistice" into the gdb command prompt, and started stepping through every line in ls.c until I came across something that caught my eye.
+
+What caught my eye was the function that sorts the files according to time – they were using a function cmp_mtime to sort them, which in turn used a function timespec_cmp to return the difference in times. I then used "info functions" to see where that was implemented, and found the cursed file "timespec.h". In the function timespec_cmp, the return value was determined by subtracting the two times of the files and returning that, assuming that the value would always be correctly negative.
+
+What I realized, though, was that integer overflow exists. When a very, very large negative number was subtracted, the result would show up as positive, and 1918 would be treated as though it were a later date than 1918.
+
+So, instead of using all that magic of returning the result of the subtraction, I replaced it with this simple declaration:
+
+ 45 static inline int
+ 46 timespec_cmp (struct timespec a, struct timespec b)
+ 47 {
+ 48   if (a.tv_sec == b.tv_sec)
+ 49       return 0;
+ 50   else if (a.tv_sec > b.tv_sec)
+ 51       return 1;
+ 52   else
+ 53       return -1;
+ 54 }
+
+Before I changed this, I made a copy of timespec.h called timespecORIG.h. By running diff -u timespecORIG.h timespec.h > lab4.diff, I successfully obtained a patch file I could use to fix this issue. I prepended it with a changelog describing the issue and the fix; the actual patch goes as follows.
+
+--- lib/timespecORIG.h  2019-10-31 01:10:34.855176000 -0700
++++ lib/timespec.h      2019-10-31 01:34:14.230674000 -0700
+@@ -45,8 +45,12 @@
+ static inline int
+ timespec_cmp (struct timespec a, struct timespec b)
+ {
+-  int diff = a.tv_sec - b.tv_sec;
+-  return diff ? diff : a.tv_nsec - b.tv_nsec;
++  if (a.tv_sec == b.tv_sec)
++      return 0;
++  else if (a.tv_sec > b.tv_sec)
++      return 1;
++  else
++      return -1;
+ }
+ 
+ # if ! HAVE_DECL_NANOSLEEP
+
+
+When I run my bash script again, the output is as follows:
+
+-rw-r--r-- 1 pombo csugrad 0 2019-10-31 09:31:54.014091000 +0000 now1
+-rw-r--r-- 1 pombo csugrad 0 2019-10-31 09:31:53.007060143 +0000 now
+-rw-r--r-- 1 pombo csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+
+-rw-r--r-- 1 pombo csugrad 0 2019-10-31 09:31:54.014091000 +0000 now1
+-rw-r--r-- 1 pombo csugrad 0 2019-10-31 09:31:53.007060143 +0000 now
+-rw-r--r-- 1 pombo csugrad 0 1918-11-11 11:00:00.000000000 +0000 wwi-armistice-cs35L
+
+and the bug is patched.
