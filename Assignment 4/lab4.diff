@@ -1,6 +1,8 @@
-This addresses an issue where, when listing files in a directory by time according to ls -t, files created very far in the past would appear to have been created before files created even today.
+This addresses an issue where, when listing files in a directory by time according to ls -t, files created very far in the past would appear to have been created before
+files created even today.
 
-The original implementation used the reuslt of a subtraction to return the sorting status, which was not robust against integer overflow. This new function only returns a 1, 0, or -1, and the comparison is shielded against overflow.
+The original implementation used the reuslt of a subtraction to return the sorting status, which was not robust against integer overflow. This new function only returns a
+1, 0, or -1, and the comparison is shielded against overflow.
 
 --- lib/timespecORIG.h	2019-10-31 01:10:34.855176000 -0700
 +++ lib/timespec.h	2019-10-31 01:34:14.230674000 -0700

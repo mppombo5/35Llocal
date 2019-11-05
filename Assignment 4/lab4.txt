@@ -36,11 +36,15 @@ as though 1918 had come before 2019.
 
 
 And now, the debugging:
-I started by making the 3 files of interest in the coreutils-with-bug/ directory and running gdb on ./ls. Then I passed "run -lt now now1 armistice" into the gdb command prompt, and started stepping through every line in ls.c until I came across something that caught my eye.
+I started by making the 3 files of interest in the coreutils-with-bug/ directory and running gdb on ./ls. 
+Then I passed "run -lt now now1 armistice" into the gdb command prompt, and started stepping through every line in ls.c until I came across something that caught my eye.
 
-What caught my eye was the function that sorts the files according to time – they were using a function cmp_mtime to sort them, which in turn used a function timespec_cmp to return the difference in times. I then used "info functions" to see where that was implemented, and found the cursed file "timespec.h". In the function timespec_cmp, the return value was determined by subtracting the two times of the files and returning that, assuming that the value would always be correctly negative.
+What caught my eye was the function that sorts the files according to time – they were using a function cmp_mtime to sort them, which in turn used a function timespec_cmp
+to return the difference in times. I then used "info functions" to see where that was implemented, and found the cursed file "timespec.h". In the function timespec_cmp,
+the return value was determined by subtracting the two times of the files and returning that, assuming that the value would always be correctly negative.
 
-What I realized, though, was that integer overflow exists. When a very, very large negative number was subtracted, the result would show up as positive, and 1918 would be treated as though it were a later date than 1918.
+What I realized, though, was that integer overflow exists. When a very, very large negative number was subtracted, the result would show up as positive, and 1918 would
+be treated as though it were a later date than 1918.
 
 So, instead of using all that magic of returning the result of the subtraction, I replaced it with this simple declaration:
 
@@ -55,7 +59,8 @@ So, instead of using all that magic of returning the result of the subtraction, 
  53       return -1;
  54 }
 
-Before I changed this, I made a copy of timespec.h called timespecORIG.h. By running diff -u timespecORIG.h timespec.h > lab4.diff, I successfully obtained a patch file I could use to fix this issue. I prepended it with a changelog describing the issue and the fix; the actual patch goes as follows.
+Before I changed this, I made a copy of timespec.h called timespecORIG.h. By running diff -u timespecORIG.h timespec.h > lab4.diff, I successfully obtained a patch file I could
+use to fix this issue. I prepended it with a changelog describing the issue and the fix; the actual patch goes as follows.
 
 --- lib/timespecORIG.h  2019-10-31 01:10:34.855176000 -0700
 +++ lib/timespec.h      2019-10-31 01:34:14.230674000 -0700

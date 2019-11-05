@@ -12,15 +12,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="437164b5-bd4e-47f7-b9be-283d464ae822" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 1_2.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 2_1.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 2_2.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 3_1.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 3_2.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 4_1.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 4_2.pdf" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../Slides/CS 35L 5_1.pdf" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab4.diff" beforeDir="false" afterPath="$PROJECT_DIR$/../lab4.diff" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../lab4.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../lab4.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -99,6 +92,7 @@
       <workItem from="1572399730262" duration="301000" />
       <workItem from="1572400464176" duration="190000" />
       <workItem from="1572400696679" duration="1478000" />
+      <workItem from="1572825195273" duration="103000" />
     </task>
     <servers />
   </component>
