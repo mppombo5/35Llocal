@@ -85,14 +85,13 @@ int main(int argc, char* argv[]) {
     }
     // stick a space on the end if fileBuffer doesn't already end with one
     int offset = readBytes;
-    if (fileBuffer[readBytes-1] != ' ') {
+    if (didReadBytes && fileBuffer[readBytes-1] != ' ') {
         fileBuffer[readBytes] = ' ';
-        offset++;
     }
 
     lseek(0, 0, SEEK_CUR);
 
-    sleep(10);
+    //sleep(10);
 
     // start with 8 words, grow as needed
     size_t list2Size = 0;
