@@ -1,4 +1,6 @@
-// this is here solely for referential purposes
+/* This file is not part of what I'm submitting for the project.
+ * This is only to be used as reference to build my sfrobu file.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
