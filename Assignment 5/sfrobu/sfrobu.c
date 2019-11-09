@@ -31,8 +31,7 @@ int main(int argc, char* argv[]) {
     }
 
     struct stat fileStat;
-    // file descriptor for stdin is 0
-    if (fstat(0, &fileStat) == -1) {
+    if (fstat(STDIN_FILENO, &fileStat) == -1) {
         fprintf(stderr, "%s: Error reading stdin\n%s", progName, strerror(errno));
         exit(1);
     }
@@ -45,7 +44,7 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
     //sleep(10);
-    int readBytes = read(0, fileBuffer, fSize);
+    int readBytes = read(STDIN_FILENO, fileBuffer, fSize);
     if (readBytes == -1) {
         fprintf(stderr, "%s: Error reading from standard input\n%s", progName, strerror(errno));
         exit(1);
@@ -83,13 +82,12 @@ int main(int argc, char* argv[]) {
         wordList1[list1Size] = &fileBuffer[i];
         list1Size++;
     }
-    // stick a space on the end if fileBuffer doesn't already end with one
-    int offset = readBytes;
+
     if (didReadBytes && fileBuffer[readBytes-1] != ' ') {
         fileBuffer[readBytes] = ' ';
     }
 
-    lseek(0, 0, SEEK_CUR);
+    lseek(STDIN_FILENO, 0, SEEK_CUR);
 
     //sleep(10);
 
@@ -182,7 +180,7 @@ int main(int argc, char* argv[]) {
      */
     for (size_t j = 0; j < compositeSize; j++) {
         for (int k = 0; wordList[j][k] != ' '; k++) {
-            if (putchar(wordList[j][k]) == EOF) {
+            if (write(STDOUT_FILENO, &wordList[j][k], sizeof(char)) == -1) {
                 fprintf(stderr, "%s: Error printing to standard output\n", progName);
                 exit(1);
             }
