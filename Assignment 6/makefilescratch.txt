@@ -1,0 +1,9 @@
+randmain:
+gcc -O2 -g3 -Wall -Wextra -march=native -mtune=native -mrdrnd -ldl -Wl,-rpath=$PWD randmain.o randcpuid.o -o randmain
+
+randmain.o:
+gcc -O2 -g3 -Wall -Wextra -march=native -mtune=native -mrdrnd -c randmain.c
+
+randcpuid.o:
+gcc -O2 -g3 -Wall -Wextra -march=native -mtune=native -mrdrnd -c randcpuid.c
+

@@ -1,0 +1,228 @@
+--- 1 ---
+
+When I first compiled the simpgmp program, I passed in a few integers to see how it works.
+Once I realized it raises 2 to the power of the argument, I passed in
+./simpgmp 24
+
+and the result was 16777216.
+
+
+--- 2 ---
+
+For raising 2 to the power of 2^24, I used the commands
+./simpgmp $(./simpgmp 24) | wc -m
+./simpgmp $(./simpgmp 24) | head -c 4
+./simpgmp $(./simpgmp 24) | tail -c 5
+
+The outputs, respectively, are:
+5050447 (makes sense, because the number of characters/bytes is always overcounted by 1)
+1818
+7536
+
+So the assertions made in the spec are correct.
+
+
+--- 3 ---
+
+The output from ldd tells me that the program uses the following dynamic libraries:
+linux-vdso.so.1 =>  (0x00007ffee13b8000)
+libgmp.so.10 => /lib64/libgmp.so.10 (0x00007f134665b000)
+libc.so.6 => /lib64/libc.so.6 (0x00007f134628d000)
+/lib64/ld-linux-x86-64.so.2 (0x00007f13468d3000)
+
+
+--- 4 ---
+
+To examine the strace output of ./simpgmp, I ran the command
+strace -o simpoutput.txt ./simpgmp 5
+
+And then examined the output using Vim.
+
+The pattern I noticed is that for each dynamic library, the program repeatedly makes system calls to open() the file in different paths until it gets a result that indicates it exists;
+I assume it is searching along a library path until it reaches a valid library, much in the way that $PATH searches through directories for valid binaries to execute until it finds one that exists.
+
+Once a valid file is found and assigned a file descriptor, a read() call is made to get whatever data it needs from the library.
+
+When the read() (and close()) call has been made, there is also an mmap() call to dynamically allocate some memory and protect the heap so that that section cannot be written on or executed.
+
+
+--- 5 ---
+
+The command
+ls /usr/bin | awk '(NR-405140036)%251 == 0'
+
+produces the result:
+catman
+dwz
+grub2-mkfont
+json_reformat
+lsipc
+oclock
+POST
+sha512sum
+updatedb
+
+so these are the commands I will investigate.
+
+
+--- 6 ---
+
+I wrote the following script to test these files:
+
+#!/bin/bash
+
+for cmd in $(ls /usr/bin | awk '(NR-405140036)%251 == 0'); do
+    echo "$cmd:"
+    ldd /usr/bin/$cmd
+    echo ""
+done
+
+
+and running it yielded the following:
+
+catman:
+	linux-vdso.so.1 =>  (0x00007ffc08fa7000)
+	libmandb-2.6.3.so => /usr/lib64/man-db/libmandb-2.6.3.so (0x00007f82b83b2000)
+	libman-2.6.3.so => /usr/lib64/man-db/libman-2.6.3.so (0x00007f82b8192000)
+	libgdbm.so.4 => /lib64/libgdbm.so.4 (0x00007f82b7f89000)
+	libpipeline.so.1 => /lib64/libpipeline.so.1 (0x00007f82b7d7c000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f82b79ae000)
+	libz.so.1 => /lib64/libz.so.1 (0x00007f82b7798000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f82b85b8000)
+
+dwz:
+	linux-vdso.so.1 =>  (0x00007ffcea7c1000)
+	libelf.so.1 => /lib64/libelf.so.1 (0x00007f9c3bd93000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f9c3b9c5000)
+	libz.so.1 => /lib64/libz.so.1 (0x00007f9c3b7af000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f9c3bfab000)
+
+grub2-mkfont:
+	linux-vdso.so.1 =>  (0x00007fff55988000)
+	libfreetype.so.6 => /lib64/libfreetype.so.6 (0x00007f1a2c536000)
+	libdevmapper.so.1.02 => /lib64/libdevmapper.so.1.02 (0x00007f1a2c2df000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f1a2bf11000)
+	libz.so.1 => /lib64/libz.so.1 (0x00007f1a2bcfb000)
+	libbz2.so.1 => /lib64/libbz2.so.1 (0x00007f1a2baeb000)
+	libpng15.so.15 => /lib64/libpng15.so.15 (0x00007f1a2b8c0000)
+	libselinux.so.1 => /lib64/libselinux.so.1 (0x00007f1a2b699000)
+	libsepol.so.1 => /lib64/libsepol.so.1 (0x00007f1a2b3fb000)
+	libudev.so.1 => /lib64/libudev.so.1 (0x00007f1a2b1e5000)
+	libpthread.so.0 => /lib64/libpthread.so.0 (0x00007f1a2afc9000)
+	libm.so.6 => /lib64/libm.so.6 (0x00007f1a2acc7000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f1a2c7f5000)
+	libpcre.so.1 => /lib64/libpcre.so.1 (0x00007f1a2aa65000)
+	libdl.so.2 => /lib64/libdl.so.2 (0x00007f1a2a861000)
+	librt.so.1 => /lib64/librt.so.1 (0x00007f1a2a659000)
+	libcap.so.2 => /lib64/libcap.so.2 (0x00007f1a2a454000)
+	libdw.so.1 => /lib64/libdw.so.1 (0x00007f1a2a203000)
+	libgcc_s.so.1 => /lib64/libgcc_s.so.1 (0x00007f1a29fed000)
+	libattr.so.1 => /lib64/libattr.so.1 (0x00007f1a29de8000)
+	libelf.so.1 => /lib64/libelf.so.1 (0x00007f1a29bd0000)
+	liblzma.so.5 => /lib64/liblzma.so.5 (0x00007f1a299aa000)
+
+json_reformat:
+	linux-vdso.so.1 =>  (0x00007ffedb0ea000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f462e95a000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f462ed28000)
+
+lsipc:
+	linux-vdso.so.1 =>  (0x00007fffa1df3000)
+	libsmartcols.so.1 => /lib64/libsmartcols.so.1 (0x00007f6763156000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f6762d88000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f676337f000)
+
+oclock:
+	linux-vdso.so.1 =>  (0x00007ffcdc5df000)
+	libXmu.so.6 => /lib64/libXmu.so.6 (0x00007f0047f5c000)
+	libXext.so.6 => /lib64/libXext.so.6 (0x00007f0047d4a000)
+	libXt.so.6 => /lib64/libXt.so.6 (0x00007f0047ae3000)
+	libX11.so.6 => /lib64/libX11.so.6 (0x00007f00477a5000)
+	libxkbfile.so.1 => /lib64/libxkbfile.so.1 (0x00007f0047580000)
+	libm.so.6 => /lib64/libm.so.6 (0x00007f004727e000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007f0046eb0000)
+	libSM.so.6 => /lib64/libSM.so.6 (0x00007f0046ca8000)
+	libICE.so.6 => /lib64/libICE.so.6 (0x00007f0046a8c000)
+	libxcb.so.1 => /lib64/libxcb.so.1 (0x00007f0046864000)
+	libdl.so.2 => /lib64/libdl.so.2 (0x00007f0046660000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007f0048177000)
+	libuuid.so.1 => /lib64/libuuid.so.1 (0x00007f004645b000)
+	libXau.so.6 => /lib64/libXau.so.6 (0x00007f0046257000)
+
+POST:
+	not a dynamic executable
+
+sha512sum:
+	linux-vdso.so.1 =>  (0x00007fff7a39a000)
+	libcrypto.so.10 => /lib64/libcrypto.so.10 (0x00007fd567faf000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007fd567be1000)
+	libdl.so.2 => /lib64/libdl.so.2 (0x00007fd5679dd000)
+	libz.so.1 => /lib64/libz.so.1 (0x00007fd5677c7000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fd568412000)
+
+updatedb:
+	linux-vdso.so.1 =>  (0x00007ffff4dee000)
+	libc.so.6 => /lib64/libc.so.6 (0x00007fb888beb000)
+	/lib64/ld-linux-x86-64.so.2 (0x00007fb8891c7000)
+
+
+I seem to have been very lucky, because no errors came up with running ldd on any of the files.
+
+
+--- 7 ---
+
+Then, since automation is amazing, I wrote another script to print out all these files and sort them:
+
+#!/usr/local/cs/bin/bash
+
+echo "" > dll.txt
+for cmd in $(ls /usr/bin | awk '(NR-405140036)%251 == 0'); do
+    ldd /usr/bin/$cmd | sed -r "s#^[[:space:]]+([^ ]+).*#\1#g" >> dll.txt
+done
+
+sort -u dll.txt
+rm dll.txt
+
+
+This gave the following output:
+
+/lib64/ld-linux-x86-64.so.2
+libattr.so.1
+libbz2.so.1
+libcap.so.2
+libcrypto.so.10
+libc.so.6
+libdevmapper.so.1.02
+libdl.so.2
+libdw.so.1
+libelf.so.1
+libfreetype.so.6
+libgcc_s.so.1
+libgdbm.so.4
+libICE.so.6
+liblzma.so.5
+libman-2.6.3.so
+libmandb-2.6.3.so
+libm.so.6
+libpcre.so.1
+libpipeline.so.1
+libpng15.so.15
+libpthread.so.0
+librt.so.1
+libselinux.so.1
+libsepol.so.1
+libsmartcols.so.1
+libSM.so.6
+libudev.so.1
+libuuid.so.1
+libX11.so.6
+libXau.so.6
+libxcb.so.1
+libXext.so.6
+libxkbfile.so.1
+libXmu.so.6
+libXt.so.6
+libz.so.1
+linux-vdso.so.1
+
+*Editor's note: there was originally one instance of "not" in this list because one command didn't depend on any dynamic libraries; I just removed this manually.

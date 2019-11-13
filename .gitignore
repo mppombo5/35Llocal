@@ -1,5 +1,7 @@
 # custom ignore rules
 Slides/*
+*.tgz
+*.tar.gz
 
 # Created by https://www.gitignore.io/api/c,vim,macos,emacs,python
 # Edit at https://www.gitignore.io/?templates=c,vim,macos,emacs,python

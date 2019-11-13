@@ -1,6 +1,9 @@
 ---Laboratory---
 
-Writing the new versions of tr is easy enough. The form of both consists of checking for the validity of the arguments, and then looping through every character in stdin and outputting it to stdout. If the char in stdin is in "from", then output the corresponding in "to" instead.
+Writing the new versions of tr is easy enough. The form of both consists of checking for
+ the validity of the arguments, and then looping through every character in stdin and
+ outputting it to stdout. If the char in stdin is in "from", then output the corresponding
+ in "to" instead.
 
 
 strace calls for tr2b:
@@ -21,19 +24,33 @@ For copying from a file to my terminal, I used the command
 strace -o straceuterm.txt ./tr2u 'qwertyuiop' 'asdfghjkl;' < bigfile.txt
 
 
-Once I had done this, I had four files I could use to easily compare the difference in system calls between the different commands. (These files are insane; the output file for straceufile is half a gigabyte large.)
+Once I had done this, I had four files I could use to easily compare the difference in
+ system calls between the different commands. (These files are insane; the output file
+ for straceufile is half a gigabyte large.)
 
 
 Outputting to files:
-The main difference I see in strace after about line 50 is the size of the bytes that are read and written. In the buffered version, pretty much every single read and write call deal with sizes of 8192 bytes; in the unbuffered version, every call reads and writes only 1 byte at a time. This is expected based on the explanation of buffered vs. unbuffered behavior we were given in class – the buffered version makes for much, much more efficient use of memory. The size of the output files from the strace call are also fairly telling: the buffered output file is 84 kilobytes, while the unbuffered output file is 421 megabytes.
+The main difference I see in strace after about line 50 is the size of the bytes that
+are read and written. In the buffered version, pretty much every single read and write
+call deal with sizes of 8192 bytes; in the unbuffered version, every call reads and
+writes only 1 byte at a time. This is expected based on the explanation of buffered 
+vs. unbuffered behavior we were given in class – the buffered version makes for much, 
+much more efficient use of memory. The size of the output files from the strace call 
+are also fairly telling: the buffered output file is 84 kilobytes, while the 
+unbuffered output file is 421 megabytes.
 
 
 Outputting to terminal:
-The difference is essentially the same: the buffered version is writing chunks three, almost four orders of magnitude larger than the unbuffered version. One interesting difference between writing to a file and writing to the terminal is the fact that the buffered version doesn't read 8192 bytes and then write 8192 bytes; it makes 8 calls to read 1024 bytes, and then writes them all in one 8192-byte write statement.
+The difference is essentially the same: the buffered version is writing chunks three, 
+almost four orders of magnitude larger than the unbuffered version. One interesting 
+difference between writing to a file and writing to the terminal is the fact that the 
+buffered version doesn't read 8192 bytes and then write 8192 bytes; it makes 8 calls to 
+read 1024 bytes, and then writes them all in one 8192-byte write statement.
 
 
 Difference in time:
-To time the difference in the two programs, I called the two programs on bigfile and redirected the output to /dev/null:
+To time the difference in the two programs, I called the two programs on bigfile and 
+redirected the output to /dev/null:
 /bin/time -p ./tr2b 'qwertyuiop' 'asdfghjkl;' < bigfile.txt > /dev/null
 /bin/time -p ./tr2u 'qwertyuiop' 'asdfghjkl;' < bigfile.txt > /dev/null
 
@@ -50,7 +67,8 @@ user 3.20
 sys 4.77
 
 
-This difference is pretty staggering; the unbuffered version takes almost 20 times longer to run than its buffered counterpart.
+This difference is pretty staggering; the unbuffered version takes almost 20 times longer 
+to run than its buffered counterpart.
 
 
 
@@ -179,10 +197,13 @@ user	0m3.604s
 sys	0m3.393s
 
 
-On inspection, sfrob seems to take the same amount of time, even when we apply it on a file with 10 million bytes. sfrobu, on the other hand, seems to grow more or less linearly with the input.
+On inspection, sfrob seems to take the same amount of time, even when we apply it on a 
+file with 10 million bytes. sfrobu, on the other hand, seems to grow more or less linearly 
+with the input.
 
 
-If Eggert had felt particularly sadistic and made us use system calls to allocate memory, we would have had to use the mmap() function. In the strace output, the call looks like
+If Eggert had felt particularly sadistic and made us use system calls to allocate memory, 
+we would have had to use the mmap() function. In the strace output, the call looks like
 mmap(NULL, 2128952, PROT_READ|PROT_EXEC, MAP_PRIVATE|MAP_DENYWRITE, 3, 0) = 0x7fbd0a585000
 
 
